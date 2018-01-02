@@ -7,9 +7,8 @@ public class BrowserDataList {
     public String browserId;
     private String browserLogs;
 
-    @JsonCreator
-    public BrowserDataList(@JsonProperty String browserLogs,String browserId) {
-        this.browserId=browserId;
+    public BrowserDataList( String browserLogs, String browserId) {
+        this.browserId = browserId;
         this.browserLogs = browserLogs;
     }
 

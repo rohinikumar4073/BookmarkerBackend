@@ -1,19 +1,3 @@
-/*
- * Copyright 2002-2014 the original author or authors.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package com.bookmarker;
 
 import com.bookmarker.modal.BrowserDataList;
@@ -36,7 +20,6 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
@@ -83,17 +66,22 @@ public class BookMarkerApplication {
     String index() {
         return "index";
     }
-    @CrossOrigin(origins = "chrome-extension://hbidlcaepejkjoakcffjhohfinbeancf")
+
+    @CrossOrigin(origins = "chrome-extension://mfgpcckppbddjggfkiddleckmbokeikb")
     @RequestMapping(value = "/browserData", method = RequestMethod.POST)
-    public ResponseEntity<?> loadBrowserData(@RequestBody BrowserDataList browserDataList) {
+        public ResponseEntity<?> loadBrowserData(@RequestBody BrowserDataList browserDataList) {
         try {
-            bookMarkerBrowserService.saveUploadedFiles(browserDataList.getBrowserLogs());
+            bookMarkerBrowserService.saveUploadedFiles(browserDataList);
         } catch (IOException e) {
             e.printStackTrace();
-            return new ResponseEntity("Error in saving data" ,
+            return new ResponseEntity("Error in saving data",
+                    new HttpHeaders(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }catch (Exception e){
+            e.printStackTrace();
+            return new ResponseEntity(e.getMessage(),
                     new HttpHeaders(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        return new ResponseEntity("Successfully uploaded data " ,
+        return new ResponseEntity("Successfully uploaded data ",
                 new HttpHeaders(), HttpStatus.OK);
     }
 
@@ -129,6 +117,7 @@ public class BookMarkerApplication {
             return new HikariDataSource(config);
         }
     }
+
     @Bean
     public WebMvcConfigurer corsConfigurer() {
         return new WebMvcConfigurerAdapter() {

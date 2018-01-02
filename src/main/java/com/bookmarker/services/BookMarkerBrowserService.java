@@ -21,10 +21,13 @@ public class BookMarkerBrowserService {
         Type listType = new TypeToken<List<BrowserHistory>>(){}.getType();
         List<BrowserHistory> browserHistory = new Gson().fromJson(browserDataList.getBrowserLogs(),
                 listType);
-        browserHistoryRepository.insert(browserHistory);
+        if(browserHistory.size()>0){
+            browserHistory.forEach(item -> item.setBrowserId(browserDataList.browserId));
+            browserHistoryRepository.insert(browserHistory);
+        }else{
+            throw new RuntimeException("No browser logs present");
+        }
+
     }
 
-    private void checkIfbrowserIdExists(String browserId) {
-        browserHistoryRepository.exists(browserId);
-    }
 }
