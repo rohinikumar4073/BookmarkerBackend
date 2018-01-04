@@ -2,6 +2,8 @@ package com.bookmarker;
 
 import com.bookmarker.modal.BrowserDataList;
 import com.bookmarker.modal.BrowserHistory;
+import com.bookmarker.modal.BrowserHistoryJson;
+import com.bookmarker.modal.BrowserHistoryJsonHeader;
 import com.bookmarker.repository.BrowserHistoryRepository;
 import com.bookmarker.services.BookMarkerBrowserService;
 import com.bookmarker.util.TestUtils;
@@ -13,8 +15,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
+import static org.junit.Assert.*;
 
-import java.util.List;
+import java.util.*;
 
 import static org.mockito.Mockito.*;
 @RunWith(MockitoJUnitRunner.class)
@@ -41,11 +44,21 @@ public class BookMarkerBrowserServiceTest {
         bookMarkerBrowserService.saveUploadedFiles(browserDataList);
     }
     @Test
-    public void json_file_conversion() throws Exception {
-      ;
-
-        List<BrowserHistory> browserHistoryList = TestUtils.getSampleBrowserHistory();
-        bookMarkerBrowserService.convertToJSONFile(browserHistoryList);
+    public void json_file_conversion_header() throws Exception {
+        BrowserHistoryJsonHeader browserHistoryJsonHeader=bookMarkerBrowserService.getBrowserHeader();
+        assertEquals(browserHistoryJsonHeader.getAttributes().size(),6);
+        assertEquals(browserHistoryJsonHeader.getAttributes().get(0).getName(),"dayOfTheWeek");
+        assertEquals(browserHistoryJsonHeader.getAttributes().get(5).getName(),"hostname");
     }
+    @Test
+    public void json_file_conversion_data_hostmap() throws Exception {
+        List<BrowserHistory> browserHistoryList = TestUtils.getSampleBrowserHistory();
+        bookMarkerBrowserService.setLimitHostNameCount(0);
+        Map<String, Integer>  hostMap=bookMarkerBrowserService.populateHostMap(browserHistoryList);
+        int count=hostMap.get("www.facebook.com");
+        assertEquals(count,1);
+        assertEquals(bookMarkerBrowserService.populateBrowserHistoryData( browserHistoryList, hostMap).size(),1);
+    }
+
 }
 
