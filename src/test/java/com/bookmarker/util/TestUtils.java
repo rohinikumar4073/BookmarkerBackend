@@ -9,6 +9,10 @@ import java.util.List;
 public class TestUtils {
 
     public static String createBrowserHistoryString() {
+        List<BrowserHistory> browserHistoryList=getSampleBrowserHistory();
+        return new Gson().toJson(browserHistoryList).toString();
+    }
+    public static List<BrowserHistory> getSampleBrowserHistory(){
         BrowserHistory browserHistory = new BrowserHistory();
         browserHistory.setId(17768);
         browserHistory.setLastVisitTime(1508667885561.341);
@@ -18,6 +22,6 @@ public class TestUtils {
         browserHistory.setVisitCount(1);
         List<BrowserHistory> browserHistoryList = new ArrayList<BrowserHistory>();
         browserHistoryList.add(browserHistory);
-        return new Gson().toJson(browserHistoryList).toString();
+        return browserHistoryList;
     }
 }
