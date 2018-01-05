@@ -2,7 +2,6 @@ package com.bookmarker;
 
 import com.bookmarker.modal.BrowserDataList;
 import com.bookmarker.modal.BrowserHistory;
-import com.bookmarker.modal.BrowserHistoryJson;
 import com.bookmarker.modal.BrowserHistoryJsonHeader;
 import com.bookmarker.repository.BrowserHistoryRepository;
 import com.bookmarker.services.BookMarkerBrowserService;
@@ -31,21 +30,24 @@ public class BookMarkerBrowserServiceTest {
         doReturn(new WriteResult(1, true, null)).when(this.browserHistoryRepository)
                 .insert(Mockito.any(BrowserHistory.class));
         BrowserDataList browserDataList= new BrowserDataList("","");
+        bookMarkerBrowserService.setLimitHostNameCount(0);
         bookMarkerBrowserService.saveUploadedFiles(browserDataList);
     }
     @Test
     public void call_save_if_data_present() throws Exception {
         doReturn(new WriteResult(1, true, null)).when(this.browserHistoryRepository)
                 .insert(Mockito.any(BrowserHistory.class));
+        bookMarkerBrowserService.setLimitHostNameCount(0);
 
-        String browserHistoryString = TestUtils.createBrowserHistoryString();
-        String jsonString = new Gson().toJson(new BrowserDataList(browserHistoryString, "1234"));
-        BrowserDataList browserDataList= new BrowserDataList(browserHistoryString,"");
+        String browserHistoryString = new Gson().toJson(TestUtils.getSampleBrowserHistoryMulitple());
+        BrowserDataList browserDataList= new BrowserDataList(browserHistoryString,"1234");
         bookMarkerBrowserService.saveUploadedFiles(browserDataList);
     }
     @Test
     public void json_file_conversion_header() throws Exception {
-        BrowserHistoryJsonHeader browserHistoryJsonHeader=bookMarkerBrowserService.getBrowserHeader();
+
+        Map<String, Integer> hostNameMap = bookMarkerBrowserService.populateHostMap(TestUtils.getSampleBrowserHistoryMulitple());
+        BrowserHistoryJsonHeader browserHistoryJsonHeader=bookMarkerBrowserService.getBrowserHeader(hostNameMap);
         assertEquals(browserHistoryJsonHeader.getAttributes().size(),6);
         assertEquals(browserHistoryJsonHeader.getAttributes().get(0).getName(),"dayOfTheWeek");
         assertEquals(browserHistoryJsonHeader.getAttributes().get(5).getName(),"hostname");

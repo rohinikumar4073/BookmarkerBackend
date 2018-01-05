@@ -40,11 +40,6 @@ import static javax.measure.unit.SI.KILOGRAM;
 @SpringBootApplication
 public class BookMarkerApplication {
 
-    @Value("${spring.datasource.url}")
-    private String dbUrl;
-
-    @Autowired
-    private DataSource dataSource;
 
     @Autowired
     private BookMarkerBrowserService bookMarkerBrowserService;

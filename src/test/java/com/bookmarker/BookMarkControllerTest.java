@@ -33,10 +33,6 @@ public class BookMarkControllerTest {
     @MockBean
     private BrowserHistoryRepository browserHistoryRepository;
 
-    @Test
-    public void testhello() throws Exception {
-        mvc.perform(get("/hello").contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk());
-    }
 
     @Test
     public void loadBrowserData() throws Exception {
@@ -46,7 +42,7 @@ public class BookMarkControllerTest {
         String browserHistoryString = TestUtils.createBrowserHistoryString();
         String jsonString = new Gson().toJson(new BrowserDataList(browserHistoryString, "1234"));
         mvc.perform(post("/browserData").contentType(MediaType.APPLICATION_JSON)
-                .content(jsonString)).andExpect(status().isOk())
+                    .content(jsonString)).andExpect(status().isOk())
                 .andExpect(content().string("Successfully uploaded data "));
 
     }

@@ -24,4 +24,16 @@ public class TestUtils {
         browserHistoryList.add(browserHistory);
         return browserHistoryList;
     }
+    public static List<BrowserHistory> getSampleBrowserHistoryMulitple(){
+        List<BrowserHistory> browserHistoryList = getSampleBrowserHistory();
+        BrowserHistory browserHistory = new BrowserHistory();
+        browserHistory.setId(177691);
+        browserHistory.setLastVisitTime(1508668885561.341);
+        browserHistory.setTitle("");
+        browserHistory.setTypedCount(0);
+        browserHistory.setUrl("https://www.gooogle.com/photo.php?fbid=10211587966869663&set=a.1137309067822.21785.1080221148&type=3&theater");
+        browserHistory.setVisitCount(1);
+        browserHistoryList.add(browserHistory);
+        return browserHistoryList;
+    }
 }
