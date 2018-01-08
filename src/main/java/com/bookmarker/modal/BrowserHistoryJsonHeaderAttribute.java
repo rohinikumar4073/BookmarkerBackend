@@ -9,10 +9,10 @@ public class BrowserHistoryJsonHeaderAttribute {
     private String type;
     @SerializedName("class")
     private Boolean attributeClass;
-    private double weight;
+    private float weight;
     private String[] labels;
 
-    public BrowserHistoryJsonHeaderAttribute(String name, String type, Boolean attributeClass, double weight, String[] labels) {
+    public BrowserHistoryJsonHeaderAttribute(String name, String type, Boolean attributeClass, float weight, String[] labels) {
         this.name = name;
         this.type = type;
         this.attributeClass = attributeClass;
@@ -44,11 +44,11 @@ public class BrowserHistoryJsonHeaderAttribute {
         this.attributeClass = attributeClass;
     }
 
-    public double getWeight() {
+    public float getWeight() {
         return weight;
     }
 
-    public void setWeight(double weight) {
+    public void setWeight(float weight) {
         this.weight = weight;
     }
 

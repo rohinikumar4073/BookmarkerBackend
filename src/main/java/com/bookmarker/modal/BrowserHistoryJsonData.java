@@ -1,17 +1,15 @@
 package com.bookmarker.modal;
 
-import java.util.List;
-
 public class BrowserHistoryJsonData {
 
     private Boolean sparse;
     private double weight;
-    private String[] value;
+    private String[] values;
 
-    public BrowserHistoryJsonData(Boolean sparse, double weight, String[] value) {
+    public BrowserHistoryJsonData(Boolean sparse, double weight, String[] values) {
         this.sparse = sparse;
         this.weight = weight;
-        this.value = value;
+        this.values = values;
     }
 
     public Boolean getSparse() {
@@ -30,11 +28,11 @@ public class BrowserHistoryJsonData {
         this.weight = weight;
     }
 
-    public String[] getValue() {
-        return value;
+    public String[] getValues() {
+        return values;
     }
 
-    public void setValue(String[] value) {
-        this.value = value;
+    public void setValues(String[] values) {
+        this.values = values;
     }
 }

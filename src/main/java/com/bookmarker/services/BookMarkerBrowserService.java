@@ -1,40 +1,42 @@
 package com.bookmarker.services;
 
 import com.bookmarker.modal.*;
+import com.bookmarker.modal.BrowserClassifications;
 import com.bookmarker.repository.BrowserHistoryRepository;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import com.mongodb.BasicDBObject;
+import com.mongodb.DBObject;
+import com.mongodb.gridfs.GridFSDBFile;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.gridfs.GridFsTemplate;
 import org.springframework.stereotype.Service;
-import weka.classifiers.Evaluation;
+import weka.classifiers.Classifier;
 import weka.classifiers.trees.J48;
-import weka.core.Instances;
-import weka.core.SerializationHelper;
+import weka.core.*;
 import weka.core.converters.JSONLoader;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.lang.reflect.Type;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 public class BookMarkerBrowserService {
+    @Autowired
+    private MongoTemplate mongoTemplate;
+    @Autowired
+    private GridFsTemplate gridFsTemplate;
 
+    @Value("${limitHostNameCount}")
+    private Integer limitHostNameCount;
     @Autowired
     private BrowserHistoryRepository browserHistoryRepository;
-    private Integer limitHostNameCount = 40;
-
-    public BrowserHistoryRepository getBrowserHistoryRepository() {
-        return browserHistoryRepository;
-    }
-
-    public void setBrowserHistoryRepository(BrowserHistoryRepository browserHistoryRepository) {
-        this.browserHistoryRepository = browserHistoryRepository;
-    }
 
     public Integer getLimitHostNameCount() {
         return limitHostNameCount;
@@ -51,38 +53,40 @@ public class BookMarkerBrowserService {
                 listType);
         if (browserHistory.size() > 0) {
             browserHistory.forEach(item -> item.setBrowserId(browserDataList.browserId));
-            File file = convertToJSONFile(browserHistory, browserDataList.browserId);
-            JSONLoader jsonLoader = new JSONLoader();
-            jsonLoader.setSource(file);
-            Instances train = jsonLoader.getDataSet();
-            train.setClassIndex(train.numAttributes() - 1);
-            J48 nb = new J48();
-            Evaluation evaluation = new Evaluation(train);
-            evaluation.crossValidateModel(nb, train, 1, new Random(1));
-            System.out.println(evaluation.toSummaryString());
-            SerializationHelper.write("/Users/Vishnu/fb.model", nb);
-            browserHistoryRepository.insert(browserHistory);
-
+            InputStream browserStream = convertToJSONFile(browserHistory, browserDataList.browserId);
+            File tempFile = generateClassifications(browserStream);
+            saveClassificationAndBrowserHistory(browserDataList, browserHistory, tempFile);
         } else {
             throw new RuntimeException("No browser logs present");
         }
-
     }
 
-    public File convertToJSONFile(List<BrowserHistory> browserHistoryList, String browserId) throws IOException {
-        FileWriter fileWriter = null;
-        File file = null;
-        try {
-            file = File.createTempFile(browserId, ".json");
-            fileWriter = new FileWriter(file);
-            fileWriter.write(new Gson().toJson(getBrowserHistoryJson(browserHistoryList)));
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            fileWriter.flush();
-            fileWriter.close();
-        }
-        return file;
+    private void saveClassificationAndBrowserHistory(BrowserDataList browserDataList, List<BrowserHistory> browserHistory, File tempFile) throws Exception {
+        DBObject metaData = new BasicDBObject();
+        metaData.put("browserId", browserDataList.browserId);
+        InputStream inputStream = new FileInputStream(tempFile.getAbsolutePath());
+        String fileId =
+                gridFsTemplate.store(inputStream, "accessories.model", null, metaData).getId().toString();
+        BrowserClassifications browserClassifications = new BrowserClassifications(browserDataList.browserId, fileId);
+        this.mongoTemplate.save(browserClassifications, "BrowserClassifications");
+        this.browserHistoryRepository.save(browserHistory);
+    }
+
+    private File generateClassifications(InputStream browserStream) throws Exception {
+        JSONLoader jsonLoader = new JSONLoader();
+        jsonLoader.setSource(browserStream);
+        Instances train = jsonLoader.getDataSet();
+        train.setClassIndex(train.numAttributes() - 1);
+        J48 nb = new J48();
+        File tempFile = File.createTempFile("classification", "txt");
+        SerializationHelper.write(tempFile.getAbsolutePath(), nb);
+        return tempFile;
+    }
+
+    public InputStream convertToJSONFile(List<BrowserHistory> browserHistoryList, String browserId) throws IOException {
+        String browserJsonObject = new Gson().toJson(getBrowserHistoryJson(browserHistoryList));
+        InputStream browserJsonStream = new ByteArrayInputStream(browserJsonObject.getBytes());
+        return browserJsonStream;
     }
 
     public BrowserHistoryJson getBrowserHistoryJson(List<BrowserHistory> browserHistoryList) {
@@ -104,15 +108,15 @@ public class BookMarkerBrowserService {
                         e.printStackTrace();
 
                     }
-                    if (hostname != null && hostNameMap.get(hostname) > this.limitHostNameCount) {
+                    if (hostname != null && hostNameMap.get(hostname) > getLimitHostNameCount()) {
                         Calendar calendar = Calendar.getInstance();
                         calendar.setTimeInMillis(new Double(browserHistory.getLastVisitTime()).longValue());
-                        BrowserHistoryJsonData browserHistoryJsonData = new BrowserHistoryJsonData(false, 10,
+                        BrowserHistoryJsonData browserHistoryJsonData = new BrowserHistoryJsonData(false, 1.01,
                                 new String[]{
-                                Integer.toString(calendar.get(Calendar.DAY_OF_WEEK)),
+                                        Integer.toString(calendar.get(Calendar.DAY_OF_WEEK)),
                                         Integer.toString(calendar.get(Calendar.HOUR)),
                                         Integer.toString(calendar.get(Calendar.DAY_OF_MONTH)),
-                                Integer.toString(calendar.get(Calendar.MONTH)),
+                                        Integer.toString(calendar.get(Calendar.MONTH)),
                                         Integer.toString(calendar.get(Calendar.WEEK_OF_MONTH)), hostname});
                         browserHistoryJsonDataList.add(browserHistoryJsonData);
                     }
@@ -155,16 +159,48 @@ public class BookMarkerBrowserService {
     }
 
     private List<BrowserHistoryJsonHeaderAttribute> getBrowserHeaderAttributes(Map<String, Integer> hostNameMap) {
-        Set <String> hostNames= hostNameMap.keySet();
+        Set<String> hostNames = hostNameMap.keySet();
         String[] hostArr = new String[hostNames.size()];
         List<BrowserHistoryJsonHeaderAttribute> browserHistoryJsonHeaderAttributeList = new ArrayList<BrowserHistoryJsonHeaderAttribute>();
-        browserHistoryJsonHeaderAttributeList.add(new BrowserHistoryJsonHeaderAttribute("dayOfTheWeek", "numeric", false, 1.0, null));
-        browserHistoryJsonHeaderAttributeList.add(new BrowserHistoryJsonHeaderAttribute("time", "numeric", false, 1.0, null));
-        browserHistoryJsonHeaderAttributeList.add(new BrowserHistoryJsonHeaderAttribute("dayOfTheMonth", "numeric", false, 1.0, null));
-        browserHistoryJsonHeaderAttributeList.add(new BrowserHistoryJsonHeaderAttribute("Month", "numeric", false, 1.0, null));
-        browserHistoryJsonHeaderAttributeList.add(new BrowserHistoryJsonHeaderAttribute("weekOfTheMonth", "numeric", false, 1.0, null));
+        browserHistoryJsonHeaderAttributeList.add(new BrowserHistoryJsonHeaderAttribute
+                ("dayOfTheWeek", "numeric", false, 1.01f, null));
+        browserHistoryJsonHeaderAttributeList.add(new BrowserHistoryJsonHeaderAttribute(
+                "time", "numeric", false, 1.01f, null));
+        browserHistoryJsonHeaderAttributeList.add(new BrowserHistoryJsonHeaderAttribute("dayOfTheMonth", "numeric", false, 1.01f, null));
+        browserHistoryJsonHeaderAttributeList.add(new BrowserHistoryJsonHeaderAttribute("Month", "numeric", false, 1.01f, null));
+        browserHistoryJsonHeaderAttributeList.add(new BrowserHistoryJsonHeaderAttribute("weekOfTheMonth", "numeric", false, 1.01f, null));
         browserHistoryJsonHeaderAttributeList.add(
-                new BrowserHistoryJsonHeaderAttribute("hostname", "nominal", false, 1.0, hostNames.toArray(hostArr )));
+                new BrowserHistoryJsonHeaderAttribute("hostname", "nominal", false, 1.01f, hostNames.toArray(hostArr)));
         return browserHistoryJsonHeaderAttributeList;
+    }
+
+    public void getBrowserData(Long date,String browserId) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTimeInMillis(date);
+        BrowserClassifications browserClassifications;
+        browserClassifications = this.mongoTemplate.findOne(new Query(Criteria.where("_id").is(browserId)),
+                BrowserClassifications.class);
+        GridFSDBFile gridFsdbFile =  this.gridFsTemplate.findOne(new Query(Criteria.where("_id").is(
+                browserClassifications.getFileId())));
+        try{
+            ObjectInputStream ois = new ObjectInputStream(
+                    gridFsdbFile.getInputStream());
+            Classifier cls = (Classifier) ois.readObject();
+            double[] values = new double[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
+    /* Create and an Instance with the above values and its class label set to "positive" */
+            Instance instance = new DenseInstance(1.0,values);
+
+            double label =cls.classifyInstance(instance);
+            ois.close();
+
+        }catch (IOException e){
+            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+
     }
 }
