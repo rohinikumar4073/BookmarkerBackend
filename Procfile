@@ -1,1 +1,1 @@
-web: java -jar target/java-getting-started-1.0.jar
+web: java -Dspring.profiles.active=prod -jar target/backend-0.1.0-SNAPSHOT.jar

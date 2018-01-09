@@ -12,6 +12,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
+import java.util.Set;
 
 @Controller
 @SpringBootApplication
@@ -25,20 +26,22 @@ public class BookMarkerApplication {
         SpringApplication.run(BookMarkerApplication.class, args);
     }
 
-    @CrossOrigin(origins = "chrome-extension://mfgpcckppbddjggfkiddleckmbokeikb")
+    @CrossOrigin(origins = "*")
     @RequestMapping(value = "/browserData", method = RequestMethod.GET)
     public ResponseEntity<?> getRecommendations(@RequestParam Long date,@RequestParam String browserId) {
+        Set<String> predictionList =null;
+
         try {
-            bookMarkerBrowserService.getBrowserData(date,browserId);
+            predictionList=  bookMarkerBrowserService.getBrowserData(date,browserId);
         }  catch (Exception e) {
             e.printStackTrace();
             return new ResponseEntity(e.getMessage(),
                     new HttpHeaders(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        return new ResponseEntity("Successfully uploaded data ",
+        return new ResponseEntity(predictionList,
                 new HttpHeaders(), HttpStatus.OK);
     }
-    @CrossOrigin(origins = "chrome-extension://mfgpcckppbddjggfkiddleckmbokeikb")
+    @CrossOrigin(origins = "*")
     @RequestMapping(value = "/browserData", method = RequestMethod.POST)
     public ResponseEntity<?> loadBrowserData(@RequestBody BrowserDataList browserDataList) {
         try {

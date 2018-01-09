@@ -10,6 +10,16 @@ public class BrowserClassifications {
     private String browserId;
     private String fileId;
 
+    public String getTrainFileId() {
+        return trainFileId;
+    }
+
+    public void setTrainFileId(String trainFileId) {
+        this.trainFileId = trainFileId;
+    }
+
+    private String trainFileId;
+
     public String getBrowserId() {
         return browserId;
     }
@@ -22,13 +32,15 @@ public class BrowserClassifications {
         return fileId;
     }
 
+    public BrowserClassifications(String browserId, String fileId, String trainFileId) {
+        this.browserId = browserId;
+        this.fileId = fileId;
+        this.trainFileId = trainFileId;
+    }
+
     public void setFileId(String fileId) {
         this.fileId = fileId;
     }
 
-    public BrowserClassifications(String browserId, String fileId) {
 
-        this.browserId = browserId;
-        this.fileId = fileId;
-    }
 }
