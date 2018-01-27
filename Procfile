@@ -1,1 +1,1 @@
-web: java -Dspring.profiles.active=prod -jar target/java-getting-started-1.0.jar
+web: java -Dspring.profiles.active=prod -jar target/bookmarker-backend-1.0.jar

@@ -1,5 +1,6 @@
 package com.bookmarker.services;
 
+import com.bol.crypt.CryptVault;
 import com.bookmarker.modal.*;
 import com.bookmarker.repository.BrowserHistoryRepository;
 import com.google.gson.Gson;
@@ -37,6 +38,9 @@ public class BookMarkerBrowserService {
     private Integer limitHostNameCount;
     @Autowired
     private BrowserHistoryRepository browserHistoryRepository;
+    @Autowired
+    CryptVault cryptVault;
+
     private boolean isSingleInstance;
 
     public MongoTemplate getMongoTemplate() {

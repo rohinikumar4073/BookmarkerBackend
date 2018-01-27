@@ -1,17 +1,32 @@
 package com.bookmarker.modal;
 
+import com.bol.secure.Encrypted;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.mapping.Field;
+
 
 @Document(collection = "browserHistory")
 public class BrowserHistory {
     @Id
     public int id;
+    @Field
+    @Encrypted
     public double lastVisitTime;
+    @Field
+    @Encrypted
     public String title;
+    @Field
+    @Encrypted
     public String url;
+    @Field
+    @Encrypted
     public int typedCount;
+    @Field
+    @Encrypted
     public int visitCount;
+    @Field
+    @Encrypted
     public String browserId;
 
     public BrowserHistory(int id, double lastVisitTime, String title, String url, int typedCount, int visitCount, String browserId) {
