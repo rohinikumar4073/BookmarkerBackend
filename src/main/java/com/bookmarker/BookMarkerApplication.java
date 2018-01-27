@@ -26,7 +26,7 @@ public class BookMarkerApplication {
         SpringApplication.run(BookMarkerApplication.class, args);
     }
 
-    @CrossOrigin(origins = "chrome-extension://mfgpcckppbddjggfkiddleckmbokeikb")
+    @CrossOrigin(origins = "chrome-extension://lifjjfakhgcmchojpafjclnbjafmkeic")
     @RequestMapping(value = "/browserData", method = RequestMethod.GET)
     public ResponseEntity<?> getRecommendations(@RequestParam Long date,@RequestParam String browserId) {
         Set<String> predictionList =null;
@@ -41,7 +41,7 @@ public class BookMarkerApplication {
         return new ResponseEntity(predictionList,
                 new HttpHeaders(), HttpStatus.OK);
     }
-    @CrossOrigin(origins = "chrome-extension://mfgpcckppbddjggfkiddleckmbokeikb")
+    @CrossOrigin(origins = "chrome-extension://lifjjfakhgcmchojpafjclnbjafmkeic")
     @RequestMapping(value = "/browserData", method = RequestMethod.POST)
     public ResponseEntity<?> loadBrowserData(@RequestBody BrowserDataList browserDataList) {
         try {
